@@ -6,6 +6,7 @@ WORKDIR /app
 
 # Set environment variable
 ENV NODE_ENV=production
+ENV PORT=5000
 
 # Copy package manifests first for optimal Docker layer caching
 COPY package*.json ./

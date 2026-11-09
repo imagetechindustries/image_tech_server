@@ -1,7 +1,0 @@
-node_modules
-server/node_modules
-.git
-.DS_Store
-server/.env
-*.log
-
