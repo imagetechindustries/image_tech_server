@@ -1,6 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const mongoose = require('mongoose');
 const connectDB = require('./config/db');
 
 // Route Imports
@@ -61,9 +62,32 @@ app.use('/api/upload', uploadRoutes);
 app.use('/', sitemapRoutes);
 
 // Health Check
-app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', message: 'ImageTech Central Multi-Tenant API is running' });
-});
+const healthHandler = (req, res) => {
+  const isDbConnected = mongoose.connection.readyState === 1;
+  const dbStates = {
+    0: 'disconnected',
+    1: 'connected',
+    2: 'connecting',
+    3: 'disconnecting'
+  };
+
+  const status = isDbConnected ? 'healthy' : 'unhealthy';
+  const statusCode = isDbConnected ? 200 : 503;
+
+  return res.status(statusCode).json({
+    status,
+    message: 'ImageTech Central Multi-Tenant API is running',
+    timestamp: new Date().toISOString(),
+    uptime: `${Math.floor(process.uptime())}s`,
+    database: {
+      status: dbStates[mongoose.connection.readyState] || 'unknown',
+      readyState: mongoose.connection.readyState
+    }
+  });
+};
+
+app.get('/health', healthHandler);
+app.get('/api/health', healthHandler);
 
 // 404 Handler for unknown API routes
 app.use('/api/*', (req, res) => {

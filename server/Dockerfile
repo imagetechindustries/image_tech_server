@@ -23,8 +23,12 @@ RUN chown -R node:node /app
 # Switch to non-root user
 USER node
 
-# Expose server port (default 3001)
+# Expose server port (default 5000)
 EXPOSE 5000
+
+# Docker Healthcheck
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+  CMD wget --no-verbose --tries=1 --spider http://127.0.0.1:5000/api/health || exit 1
 
 # Command to run the application
 CMD ["node", "server.js"]
