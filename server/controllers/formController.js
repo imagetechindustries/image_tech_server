@@ -1,6 +1,7 @@
 const { validationResult } = require('express-validator');
 const Submission = require('../models/Submission');
 const { sendInquiryEmail } = require('../utils/emailService');
+const { evaluateInquiry } = require('../utils/spamDetector');
 
 /**
  * @desc    Handle "Get a Quote" form submissions
@@ -11,6 +12,16 @@ const submitQuote = async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     return res.status(400).json({ errors: errors.array() });
+  }
+
+  // Anti-Spam & Fake Inquiry Verification
+  const spamCheck = evaluateInquiry(req.body);
+  if (spamCheck.isSpam) {
+    console.warn(`[AntiSpam Blocked] Quote inquiry rejected: ${spamCheck.reason} | IP: ${req.ip} | Email: ${req.body?.email}`);
+    return res.status(400).json({
+      success: false,
+      message: 'Invalid submission detected. Please provide a valid message and contact details.'
+    });
   }
 
   try {
@@ -67,6 +78,16 @@ const submitContact = async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     return res.status(400).json({ errors: errors.array() });
+  }
+
+  // Anti-Spam & Fake Inquiry Verification
+  const spamCheck = evaluateInquiry(req.body);
+  if (spamCheck.isSpam) {
+    console.warn(`[AntiSpam Blocked] Contact inquiry rejected: ${spamCheck.reason} | IP: ${req.ip} | Email: ${req.body?.email}`);
+    return res.status(400).json({
+      success: false,
+      message: 'Invalid submission detected. Please provide a valid message and contact details.'
+    });
   }
 
   try {
